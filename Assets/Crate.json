@@ -1,0 +1,39 @@
+{
+  "FileName": "Crate.png",
+  "FrameWidth": 64,
+  "FrameHeight": 64,
+  "RowCount": 1,
+  "ColumnCount": 7,
+  "FrameCenter": {
+    "OffsetX": 24,
+    "OffsetY": 24
+  },
+  "Animations": {
+    "Idle": {
+      "StartFrame": {
+        "Row": 0,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 0,
+        "Col": 0
+      },
+      "DurationMs": 1000,
+      "Loop": true,
+      "Flip": 0
+    },
+    "Break": {
+      "StartFrame": {
+        "Row": 0,
+        "Col": 1
+      },
+      "EndFrame": {
+        "Row": 0,
+        "Col": 6
+      },
+      "DurationMs": 600,
+      "Loop": false,
+      "Flip": 0
+    }
+  }
+}

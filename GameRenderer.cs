@@ -17,6 +17,7 @@ public unsafe class GameRenderer
     private Dictionary<int, IntPtr> _texturePointers = new();
     private Dictionary<int, TextureData> _textureData = new();
     private int _textureId;
+    private int _fontTextureId = -1;
 
     public GameRenderer(Sdl sdl, GameWindow window)
     {
@@ -109,5 +110,60 @@ public unsafe class GameRenderer
     public void PresentFrame()
     {
         _sdl.RenderPresent(_renderer);
+    }
+
+    public void RenderText(string text, int x, int y, uint color)
+    {
+        // Render only characters from the 5th row (row index 4), columns 0-9 of the bitmap font
+        // Each character is 6x10 pixels, font image is "Assets/Font.png"
+        // The 5th row, columns 0-9, are used for digits 0-9
+
+        const int charWidth = 6;
+        const int charHeight = 10;
+        const int fontRow = 4; // 5th row (0-based index)
+        const int fontColStart = 0;
+        const int fontColEnd = 9;
+        const int scale = 2; // Double the size
+        const string fontPath = "Assets/Font.png";
+        if (_fontTextureId == -1)
+        {
+            _fontTextureId = LoadTexture(fontPath, out _);
+        }
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            // Only render digits 0-9
+            if (c < '0' || c > '9')
+                continue;
+
+            int digit = c - '0';
+            // Only use columns 0-9 in the 5th row
+            if (digit < fontColStart || digit > fontColEnd)
+                continue;
+
+            var src = new Rectangle<int>(digit * charWidth, fontRow * charHeight, charWidth, charHeight);
+            var dst = new Rectangle<int>(
+                x + i * charWidth * scale,
+                y,
+                charWidth * scale,
+                charHeight * scale
+            );
+
+            // Optionally, tint the font using color (not implemented here)
+            RenderTextureScreen(_fontTextureId, src, dst);
+        }
+    }
+    public void RenderTextureScreen(int textureId, Rectangle<int> src, Rectangle<int> dst,
+    RendererFlip flip = RendererFlip.None, double angle = 0.0, Point center = default)
+    {
+        if (_texturePointers.TryGetValue(textureId, out var imageTexture))
+        {
+            // No camera transform: render directly to screen
+            _sdl.RenderCopyEx(_renderer, (Texture*)imageTexture, in src,
+                in dst,
+                angle,
+                in center, flip);
+        }
     }
 }
