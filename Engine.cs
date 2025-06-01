@@ -27,7 +27,8 @@ public class Engine
         _renderer = renderer;
         _input = input;
 
-        _input.OnMouseClick += (_, coords) => AddBomb(coords.x, coords.y);
+        // Mouse-based bomb spawning is disabled, so do not subscribe to OnMouseClick
+        // _input.OnMouseClick += (_, coords) => AddBomb(coords.x, coords.y);
     }
 
     public void SetupWorld()
@@ -92,21 +93,24 @@ public class Engine
         double down = _input.IsDownPressed() ? 1.0 : 0.0;
         double left = _input.IsLeftPressed() ? 1.0 : 0.0;
         double right = _input.IsRightPressed() ? 1.0 : 0.0;
-        bool isAttacking = _input.IsKeyAPressed() && (up + down + left + right <= 1);
-        bool addBomb = _input.IsKeyBPressed();
+        // Use IsAttackPressed (spacebar) instead of IsKeyAPressed
+        bool isAttacking = _input.IsAttackPressed() && (up + down + left + right <= 1);
+        // Bomb spawning at player location is disabled
+        bool addBomb = false;
 
         _player.UpdatePosition(up, down, left, right, 48, 48, msSinceLastFrame);
         if (isAttacking)
         {
             _player.Attack();
         }
-        
+
         _scriptEngine.ExecuteAll(this);
 
-        if (addBomb)
-        {
-            AddBomb(_player.Position.X, _player.Position.Y, false);
-        }
+        // Bomb spawning at player location is disabled
+        // if (addBomb)
+        // {
+        //     AddBomb(_player.Position.X, _player.Position.Y, false);
+        // }
     }
 
     public void RenderFrame()
