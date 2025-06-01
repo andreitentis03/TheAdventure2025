@@ -6,14 +6,12 @@ public unsafe class Input
 {
     private readonly Sdl _sdl;
 
-    public event EventHandler? OnAttack; // New event for attack (left click)
+    public event EventHandler? OnAttack;
 
     public Input(Sdl sdl)
     {
         _sdl = sdl;
     }
-
-    // WASD movement
     public bool IsLeftPressed()
     {
         ReadOnlySpan<byte> keyboardState = new(_sdl.GetKeyboardState(null), (int)KeyCode.Count);
@@ -37,8 +35,6 @@ public unsafe class Input
         ReadOnlySpan<byte> keyboardState = new(_sdl.GetKeyboardState(null), (int)KeyCode.Count);
         return keyboardState[(int)KeyCode.S] == 1;
     }
-
-    // Spacebar for bomb placement
     public bool IsBombPressed()
     {
         ReadOnlySpan<byte> keyboardState = new(_sdl.GetKeyboardState(null), (int)KeyCode.Count);

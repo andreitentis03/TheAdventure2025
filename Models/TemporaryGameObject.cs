@@ -6,7 +6,7 @@ public class TemporaryGameObject : RenderableGameObject
 {
     public double Ttl { get; init; }
     public bool IsExpired => (DateTimeOffset.Now - _spawnTime).TotalSeconds >= Ttl;
-    public bool HasExploded { get; set; } = false; // NEW
+    public bool HasExploded { get; set; } = false;
 
     private DateTimeOffset _spawnTime;
 

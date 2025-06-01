@@ -23,15 +23,13 @@ public class Crate : RenderableGameObject
         IsDestroyed = true;
         _breakAnimationStarted = true;
         SpriteSheet.ActivateAnimation("Break");
-        OnDestroyed?.Invoke(this); // NEW: notify when destroyed
+        OnDestroyed?.Invoke(this);
     }
 
     public override void Render(GameRenderer renderer)
     {
-        // If breaking animation finished, stay on last frame
         if (IsDestroyed && _breakAnimationStarted && SpriteSheet.AnimationFinished)
         {
-            // Manually render the last frame (col 6)
             var frameWidth = SpriteSheet.FrameWidth;
             var frameHeight = SpriteSheet.FrameHeight;
             var dest = (Position.X, Position.Y);
@@ -53,7 +51,6 @@ public class Crate : RenderableGameObject
             return;
         }
 
-        // If not broken or animation is playing, use normal rendering
         base.Render(renderer);
     }
 }

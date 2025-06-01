@@ -11,10 +11,9 @@ public class Coin : RenderableGameObject
     private bool _collected;
     private bool _landed;
 
-    // Animation/jump parameters
-    private readonly double _jumpDuration = 0.4; // seconds
-    private readonly double _landDuration = 0.5; // seconds
-    private readonly int _jumpHeight = 32; // pixels
+    private readonly double _jumpDuration = 0.4;
+    private readonly double _landDuration = 0.5;
+    private readonly int _jumpHeight = 32;
 
     private readonly (int X, int Y) _startPos;
     private readonly (int X, int Y) _landPos;
@@ -70,7 +69,5 @@ public class Coin : RenderableGameObject
     public override void Render(GameRenderer renderer)
     {
         base.Render(renderer);
-        // Optionally, render the coin value above the coin:
-        // renderer.RenderText(Value.ToString(), Position.X - 4, Position.Y - 32, 0xFFFFFF00);
     }
 }

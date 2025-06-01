@@ -22,25 +22,19 @@ public class Engine
 
     private DateTimeOffset _lastUpdate = DateTimeOffset.Now;
 
-    // Track previous state of bomb key (spacebar)
     private bool _bombKeyPrevState = false;
 
-    // --- Crate spawn timer state ---
     private double _crateSpawnTimer = 0;
     private readonly Random _crateRandom = new();
-    // ---
-
-    // --- Coin state ---
+  
     private readonly List<Coin> _coins = new();
     private int _totalCoins = 0;
-    // ---
 
     public Engine(GameRenderer renderer, Input input)
     {
         _renderer = renderer;
         _input = input;
 
-        // Subscribe to attack event (left click)
         _input.OnAttack += (_, __) =>
         {
             if (_player != null)
@@ -94,14 +88,11 @@ public class Engine
 
         _currentLevel = level;
 
-        // Add some crates to the world (example positions)
         AddCrate(200, 200);
         AddCrate(300, 300);
         AddCrate(400, 200);
 
-        // --- Initialize crate spawn timer ---
         ScheduleNextCrateSpawn();
-        // ---
 
         _scriptEngine.LoadAll(Path.Combine("Assets", "Scripts"));
     }
@@ -126,15 +117,10 @@ public class Engine
 
         _scriptEngine.ExecuteAll(this);
 
-        // --- Crate spawn timer logic ---
         UpdateCrateSpawn(msSinceLastFrame);
-        // ---
 
-        // --- Coin update logic ---
         UpdateCoins(msSinceLastFrame / 1000.0);
-        // ---
 
-        // Bomb placement: only on key down event (not held)
         bool bombKeyCurrent = _input.IsBombPressed();
         if (bombKeyCurrent && !_bombKeyPrevState)
         {
@@ -143,7 +129,6 @@ public class Engine
         _bombKeyPrevState = bombKeyCurrent;
     }
 
-    // --- Crate spawn timer helpers ---
     private void UpdateCrateSpawn(double msSinceLastFrame)
     {
         _crateSpawnTimer -= msSinceLastFrame / 1000.0;
@@ -156,7 +141,6 @@ public class Engine
 
     private void ScheduleNextCrateSpawn()
     {
-        // Next spawn in 5-10 seconds
         _crateSpawnTimer = 5.0 + _crateRandom.NextDouble() * 5.0;
     }
 
@@ -171,7 +155,6 @@ public class Engine
         int tileWidth = _currentLevel.TileWidth.Value;
         int tileHeight = _currentLevel.TileHeight.Value;
 
-        // Avoid spawning on top of another crate
         int maxAttempts = 20;
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
@@ -189,9 +172,6 @@ public class Engine
             }
         }
     }
-    // ---
-
-    // --- Coin logic ---
     private void UpdateCoins(double deltaSeconds)
     {
         for (int i = _coins.Count - 1; i >= 0; i--)
@@ -205,8 +185,6 @@ public class Engine
             }
         }
     }
-    // ---
-
     public void RenderFrame()
     {
         _renderer.SetDrawColor(0, 0, 0, 255);
@@ -227,7 +205,6 @@ public class Engine
     {
         var toRemove = new List<int>();
 
-        // Find all bombs and crates
         var bombs = _gameObjects.Values.OfType<TemporaryGameObject>().ToList();
         var crates = _gameObjects.Values.OfType<Crate>().ToList();
 
@@ -241,7 +218,6 @@ public class Engine
             }
         }
 
-        // Bomb/Crate collision detection
         foreach (var bomb in bombs)
         {
             if (bomb.IsExpired && !bomb.HasExploded)
@@ -250,7 +226,6 @@ public class Engine
                 {
                     if (!crate.IsDestroyed)
                     {
-                        // Simple collision: check if crate is within 48 pixels of bomb center
                         var dx = bomb.Position.X - crate.Position.X;
                         var dy = bomb.Position.Y - crate.Position.Y;
                         if (Math.Abs(dx) < 48 && Math.Abs(dy) < 48)
@@ -259,11 +234,10 @@ public class Engine
                         }
                     }
                 }
-                bomb.HasExploded = true; // Mark as processed
+                bomb.HasExploded = true; 
             }
         }
 
-        // Remove expired bombs and check for player death
         foreach (var id in toRemove)
         {
             _gameObjects.Remove(id, out var gameObject);
@@ -295,14 +269,12 @@ public class Engine
 
     private void RenderCoinCounter()
     {
-        // Draw coin icon and total at top-left of the game window (screen coordinates)
         var coinSheet = SpriteSheet.Load(_renderer, "Coin.json", "Assets");
         coinSheet.ActivateAnimation("Idle");
         var frameWidth = coinSheet.FrameWidth;
         var frameHeight = coinSheet.FrameHeight;
         var sourceRect = new Rectangle<int>(0, 0, frameWidth, frameHeight);
 
-        // Always draw at screen coordinates (8,8)
         var destRect = new Rectangle<int>(8, 8, frameWidth, frameHeight);
         _renderer.RenderTextureScreen(
             typeof(SpriteSheet)
@@ -312,9 +284,8 @@ public class Engine
             destRect
         );
 
-        // Draw coin count as two digits (e.g., 00, 01, 12, etc.) next to the icon
         string coinText = _totalCoins.ToString("D2");
-        _renderer.RenderText(coinText, 8 + frameWidth + 8, 8, 0xFFFFD700); // Gold color
+        _renderer.RenderText(coinText, 8 + frameWidth + 8, 8, 0xFFFFD700);
     }
 
     public void RenderTerrain()
@@ -373,7 +344,6 @@ public class Engine
         SpriteSheet spriteSheet = SpriteSheet.Load(_renderer, "BombExploding.json", "Assets");
         spriteSheet.ActivateAnimation("Explode");
 
-        // Optionally, you can reduce the TTL for a snappier effect, e.g. 1.2 instead of 2.1
         TemporaryGameObject bomb = new(spriteSheet, 1.2, (worldCoords.X, worldCoords.Y));
         _gameObjects.Add(bomb.Id, bomb);
     }
@@ -382,13 +352,12 @@ public class Engine
     {
         SpriteSheet crateSheet = SpriteSheet.Load(_renderer, "Crate.json", "Assets");
         Crate crate = new(crateSheet, (X, Y));
-        crate.OnDestroyed += Crate_OnDestroyed; // Subscribe to drop coins
+        crate.OnDestroyed += Crate_OnDestroyed;
         _gameObjects.Add(crate.Id, crate);
     }
 
     private void Crate_OnDestroyed(Crate crate)
     {
-        // Drop a coin at the crate's position, value 1-3
         int value = _crateRandom.Next(1, 4);
         var coinSheet = SpriteSheet.Load(_renderer, "Coin.json", "Assets");
         Coin coin = new(coinSheet, crate.Position, value);
