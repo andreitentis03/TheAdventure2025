@@ -1,0 +1,16 @@
+{
+  "FileName": "Arrow.png",
+  "FrameWidth": 100,
+  "FrameHeight": 100,
+  "RowCount": 1,
+  "ColumnCount": 1,
+  "FrameCenter": { "OffsetX": 50, "OffsetY": 50 },
+  "Animations": {
+    "Default": {
+      "StartFrame": { "Row": 0, "Col": 0 },
+      "EndFrame": { "Row": 0, "Col": 0 },
+      "DurationMs": 1000,
+      "Loop": true
+    }
+  }
+}

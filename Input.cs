@@ -6,15 +6,13 @@ public unsafe class Input
 {
     private readonly Sdl _sdl;
 
-    // Removed OnMouseClick event as mouse-based bomb spawning is disabled
-    // public EventHandler<(int x, int y)>? OnMouseClick;
-
+    private bool _leftMouseDown = false;
+    private bool _leftMouseJustPressed = false;
     public Input(Sdl sdl)
     {
         _sdl = sdl;
     }
 
-    // WASD movement instead of arrow keys
     public bool IsLeftPressed()
     {
         ReadOnlySpan<byte> keyboardState = new(_sdl.GetKeyboardState(null), (int)KeyCode.Count);
@@ -39,17 +37,29 @@ public unsafe class Input
         return keyboardState[(int)KeyCode.S] == 1;
     }
 
-    // Attack is now spacebar instead of 'A'
     public bool IsAttackPressed()
     {
         ReadOnlySpan<byte> keyboardState = new(_sdl.GetKeyboardState(null), (int)KeyCode.Count);
         return keyboardState[(int)KeyCode.Space] == 1;
     }
 
-    // Bomb spawning at player location is disabled, so always return false
     public bool IsKeyBPressed()
     {
         return false;
+    }
+
+    public bool IsLeftMouseJustPressed()
+    {
+        var result = _leftMouseJustPressed;
+        _leftMouseJustPressed = false;
+        return result;
+    }
+
+    public (int X, int Y) GetMousePosition()
+    {
+        int x = 0, y = 0;
+        _sdl.GetMouseState(&x, &y);
+        return (x, y);
     }
 
     public bool ProcessInput()
@@ -135,7 +145,14 @@ public unsafe class Input
                     }
                 case (uint)EventType.Mousebuttondown:
                     {
-                        // Mouse-based bomb spawning is disabled, so do nothing
+                        if (ev.Button.Button == (byte)MouseButton.Primary)
+                        {
+                            if (!_leftMouseDown)
+                            {
+                                _leftMouseJustPressed = true;
+                            }
+                            _leftMouseDown = true;
+                        }
                         break;
                     }
 
@@ -146,6 +163,10 @@ public unsafe class Input
 
                 case (uint)EventType.Mousebuttonup:
                     {
+                        if (ev.Button.Button == (byte)MouseButton.Primary)
+                        {
+                            _leftMouseDown = false;
+                        }
                         break;
                     }
 

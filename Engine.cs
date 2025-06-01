@@ -17,18 +17,21 @@ public class Engine
     private readonly Dictionary<string, TileSet> _loadedTileSets = new();
     private readonly Dictionary<int, Tile> _tileIdMap = new();
 
+    private readonly List<ArrowObject> _arrows = new();
+    private bool _canShootArrow = true;
+
+    private readonly List<GemObject> _gems = new();
+
     private Level _currentLevel = new();
     private PlayerObject? _player;
 
     private DateTimeOffset _lastUpdate = DateTimeOffset.Now;
+    private DateTimeOffset _nextOrcSpawn = DateTimeOffset.Now.AddSeconds(1);
 
     public Engine(GameRenderer renderer, Input input)
     {
         _renderer = renderer;
         _input = input;
-
-        // Mouse-based bomb spawning is disabled, so do not subscribe to OnMouseClick
-        // _input.OnMouseClick += (_, coords) => AddBomb(coords.x, coords.y);
     }
 
     public void SetupWorld()
@@ -93,10 +96,7 @@ public class Engine
         double down = _input.IsDownPressed() ? 1.0 : 0.0;
         double left = _input.IsLeftPressed() ? 1.0 : 0.0;
         double right = _input.IsRightPressed() ? 1.0 : 0.0;
-        // Use IsAttackPressed (spacebar) instead of IsKeyAPressed
         bool isAttacking = _input.IsAttackPressed() && (up + down + left + right <= 1);
-        // Bomb spawning at player location is disabled
-        bool addBomb = false;
 
         _player.UpdatePosition(up, down, left, right, 48, 48, msSinceLastFrame);
         if (isAttacking)
@@ -104,13 +104,78 @@ public class Engine
             _player.Attack();
         }
 
-        _scriptEngine.ExecuteAll(this);
+        if (DateTimeOffset.Now > _nextOrcSpawn)
+        {
+            SpawnOrc();
+            _nextOrcSpawn = DateTimeOffset.Now.AddSeconds(Random.Shared.Next(1, 4));
+        }
 
-        // Bomb spawning at player location is disabled
-        // if (addBomb)
-        // {
-        //     AddBomb(_player.Position.X, _player.Position.Y, false);
-        // }
+        var orcIds = _gameObjects.Values.OfType<OrcObject>().Select(o => o.Id).ToList();
+        foreach (var orcId in orcIds)
+        {
+            if (_gameObjects.TryGetValue(orcId, out var obj) && obj is OrcObject orc)
+            {
+                orc.Update(_player.Position, msSinceLastFrame, () =>
+                {
+                    _player.GameOver();
+                });
+
+                if (orc.IsDead && !orc.GemDropped)
+                {
+                    var gemSheet = SpriteSheet.Load(_renderer, "Gem.json", "Assets");
+                    var gem = new GemObject(gemSheet, (orc.Position.X, orc.Position.Y - 16));
+                    _gems.Add(gem);
+                    orc.GemDropped = true;
+                }
+
+                if (orc.IsDead && orc.GemDropped)
+                    _gameObjects.Remove(orc.Id);
+            }
+        }
+
+        if (isAttacking)
+        {
+            foreach (var orc in _gameObjects.Values.OfType<OrcObject>())
+            {
+                var dx = orc.Position.X - _player.Position.X;
+                var dy = orc.Position.Y - _player.Position.Y;
+                var dist = Math.Sqrt(dx * dx + dy * dy);
+                if (dist < 48 && !orc.IsDead)
+                {
+                    orc.TakeHit();
+                }
+            }
+        }
+
+        if (_input.IsLeftMouseJustPressed() && _canShootArrow)
+        {
+            var (mouseX, mouseY) = _input.GetMousePosition();
+            var worldPos = _renderer.ToWorldCoordinates(mouseX, mouseY);
+            var arrowSheet = SpriteSheet.Load(_renderer, "Arrow.json", "Assets");
+            var arrow = new ArrowObject(arrowSheet, _player.Position, (worldPos.X, worldPos.Y));
+            _arrows.Add(arrow);
+            _canShootArrow = false;
+        }
+        if (!_input.IsLeftMouseJustPressed() && !_input.IsLeftPressed())
+        {
+            _canShootArrow = true;
+        }
+
+        foreach (var arrow in _arrows.ToList())
+        {
+            arrow.Update(msSinceLastFrame, _gameObjects.Values.OfType<OrcObject>());
+            if (arrow.IsExpired)
+                _arrows.Remove(arrow);
+        }
+
+        foreach (var gem in _gems.ToList())
+        {
+            gem.Update(msSinceLastFrame);
+            if (gem.IsCollected)
+                _gems.Remove(gem);
+        }
+
+        _scriptEngine.ExecuteAll(this);
     }
 
     public void RenderFrame()
@@ -155,6 +220,16 @@ public class Engine
             {
                 _player.GameOver();
             }
+        }
+
+        foreach (var arrow in _arrows)
+        {
+            arrow.Render(_renderer);
+        }
+
+        foreach (var gem in _gems)
+        {
+            gem.Render(_renderer);
         }
 
         _player?.Render(_renderer);
@@ -218,5 +293,19 @@ public class Engine
 
         TemporaryGameObject bomb = new(spriteSheet, 2.1, (worldCoords.X, worldCoords.Y));
         _gameObjects.Add(bomb.Id, bomb);
+    }
+
+    private void SpawnOrc()
+    {
+        int minX = 0, minY = 0;
+        int maxX = _currentLevel.Width!.Value * _currentLevel.TileWidth!.Value;
+        int maxY = _currentLevel.Height!.Value * _currentLevel.TileHeight!.Value;
+
+        int x = Random.Shared.Next(minX, maxX);
+        int y = Random.Shared.Next(minY, maxY);
+
+        var orcSheet = SpriteSheet.Load(_renderer, "Orc.json", "Assets");
+        var orc = new OrcObject(orcSheet, (x, y));
+        _gameObjects.Add(orc.Id, orc);
     }
 }

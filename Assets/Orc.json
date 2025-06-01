@@ -1,0 +1,73 @@
+{
+  "FileName": "Orc.png",
+  "FrameWidth": 100,
+  "FrameHeight": 100,
+  "RowCount": 6,
+  "ColumnCount": 8,
+  "FrameCenter": {
+    "OffsetX": 50,
+    "OffsetY": 50
+  },
+  "Animations": {
+    "Idle": {
+      "StartFrame": {
+        "Row": 0,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 0,
+        "Col": 5
+      },
+      "DurationMs": 600,
+      "Loop": true
+    },
+    "Walk": {
+      "StartFrame": {
+        "Row": 1,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 1,
+        "Col": 7
+      },
+      "DurationMs": 800,
+      "Loop": true
+    },
+    "Attack": {
+      "StartFrame": {
+        "Row": 2,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 2,
+        "Col": 5
+      },
+      "DurationMs": 600,
+      "Loop": false
+    },
+    "Hurt": {
+      "StartFrame": {
+        "Row": 4,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 4,
+        "Col": 3
+      },
+      "DurationMs": 400,
+      "Loop": false
+    },
+    "Dead": {
+      "StartFrame": {
+        "Row": 5,
+        "Col": 0
+      },
+      "EndFrame": {
+        "Row": 5,
+        "Col": 3
+      },
+      "DurationMs": 600,
+      "Loop": false
+    }
+  }
+}
